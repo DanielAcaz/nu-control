@@ -1,7 +1,7 @@
 package tests
 
 import (
-	algorithms "../commons"
+	algorithms "github.com/daniel-acaz/nubank-control/category_service/commons"
 	"testing"
 )
 

@@ -6,8 +6,8 @@ import (
 
 	"gopkg.in/confluentinc/confluent-kafka-go.v1/kafka"
 
-	financeRegistry "../models"
-	registryService "../services"
+	model "github.com/daniel-acaz/nubank-control/category_service/models"
+	registryService "github.com/daniel-acaz/nubank-control/category_service/services"
 )
 
 func Consume() {
@@ -29,7 +29,7 @@ func Consume() {
 	for {
 		msg, err := c.ReadMessage(-1)
 		if err == nil {
-			var registry financeRegistry.FinanceRegistry
+			var registry model.FinanceRegistry
 			json.Unmarshal(msg.Value, &registry)
 			registry = registryService.CreateCategoryByBaseRegistries(registry)
 
