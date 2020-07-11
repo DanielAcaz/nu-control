@@ -7,8 +7,8 @@ import (
 
 	"github.com/gorilla/mux"
 
-	financeRegistry "../models"
-	registryService "../services"
+	model "github.com/daniel-acaz/nubank-control/category_service/models"
+	registryService "github.com/daniel-acaz/nubank-control/category_service/services"
 )
 
 func RegistryController() {
@@ -21,14 +21,14 @@ func RegistryController() {
 }
 
 func PostRegistry(w http.ResponseWriter, r *http.Request) {
-	var registry financeRegistry.FinanceRegistry
+	var registry model.FinanceRegistry
 	json.NewDecoder(r.Body).Decode(&registry)
 	createdRegistry := registryService.CreateRegistry(registry)
 	json.NewEncoder(w).Encode(createdRegistry)
 }
 
 func CreateCategoryForRegistry(w http.ResponseWriter, r *http.Request) {
-	var registry financeRegistry.FinanceRegistry
+	var registry model.FinanceRegistry
 	json.NewDecoder(r.Body).Decode(&registry)
 	registry = registryService.CreateCategoryByBaseRegistries(registry)
 	json.NewEncoder(w).Encode(registry)

@@ -3,8 +3,8 @@ package main
 import (
 	"log"
 
-	registryController "./controllers"
-	consumer "./messages"
+	registryController "github.com/daniel-acaz/nubank-control/category_service/controllers"
+	consumer "github.com/daniel-acaz/nubank-control/category_service/messages"
 )
 
 func main() {

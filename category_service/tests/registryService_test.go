@@ -1,30 +1,30 @@
 package tests
 
 import (
-	financeRegistry "../models"
-	registryService "../services"
+	model "github.com/daniel-acaz/nubank-control/category_service/models"
+	registryService "github.com/daniel-acaz/nubank-control/category_service/services"
 	"testing"
 )
 
 
 func TestFilterByStream(test *testing.T) {
 
-	registry := financeRegistry.FinanceRegistry{ ID: 1, Title: "Title to Test", FamilyCategory: "FamilyCategoryTest",
+	registry := model.FinanceRegistry{ ID: "1", Title: "Title to Test", FamilyCategory: "FamilyCategoryTest",
 		MyCategory: "MyCategoryTest", Amount: 100.0 }
 
 
-	registries := []financeRegistry.FinanceRegistry{
-		{ID: 1, Title: "Title to Testing", FamilyCategory: "FamilyCategoryTest",
+	registries := []model.FinanceRegistry{
+		{ID: "1", Title: "Title to Testing", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
-		{ID: 2, Title: "Title to Error", FamilyCategory: "FamilyCategoryTest",
+		{ID: "2", Title: "Title to Error", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
-		{ID: 3, Title: "Error", FamilyCategory: "FamilyCategoryTest",
+		{ID: "3", Title: "Error", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
-		{ID: 4, Title: "Title to Test", FamilyCategory: "FamilyCategoryTest",
+		{ID: "4", Title: "Title to Test", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
-		{ID: 5, Title: "Error", FamilyCategory: "FamilyCategoryTest",
+		{ID: "5", Title: "Error", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
-		{ID: 6, Title: "Title for Test", FamilyCategory: "FamilyCategoryTest",
+		{ID: "6", Title: "Title for Test", FamilyCategory: "FamilyCategoryTest",
 			MyCategory: "MyCategoryTest", Amount: 100.0},
 	}
 
@@ -44,8 +44,8 @@ func TestFilterByStream(test *testing.T) {
 		test.Errorf("Expected 4 but found %d", len(FortyPercentCommon) )
 	}
 
-	if FortyPercentCommon[0].ID != 4 {
-		test.Errorf("Expected id 4 but found %d", FortyPercentCommon[0].ID  )
+	if FortyPercentCommon[0].ID != "4" {
+		test.Errorf("Expected id 4 but found %v", FortyPercentCommon[0].ID  )
 	}
 
 	test.Log("All tests success")

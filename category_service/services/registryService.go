@@ -7,13 +7,13 @@ import (
 	"log"
 	"time"
 
-	algorithms "../commons"
-	financeRegistry "../models"
-	registryRepository "../repository"
+	algorithms "github.com/daniel-acaz/nubank-control/category_service/commons"
+	financeRegistry "github.com/daniel-acaz/nubank-control/category_service/models"
+	registryRepository "github.com/daniel-acaz/nubank-control/category_service/repository"
 )
 
 func CreateRegistry(registry financeRegistry.FinanceRegistry) financeRegistry.FinanceRegistry {
-	registry.ID = 1
+	registry.ID = "1"
 	return registry
 }
 
@@ -76,19 +76,7 @@ func FilterByCommonTitle(registry financeRegistry.FinanceRegistry, registries []
 
 func GetRegistriesByStartDate(startDate time.Time) []financeRegistry.FinanceRegistry {
 
-	entities := registryRepository.GetRegistriesByStartDate(startDate.Year(), int(startDate.Month()), startDate.Day())
-
-	var registries []financeRegistry.FinanceRegistry
-	for _, entity := range entities {
-		registries = append(registries, financeRegistry.FinanceRegistry{
-			ID:             entity.ID,
-			Date:           financeRegistry.RegistryDate{entity.Date},
-			Category:       entity.Category,
-			Title:          entity.Title,
-			Amount:         entity.Amount,
-			MyCategory:     entity.MyCategory,
-			FamilyCategory: entity.FamilyCategory})
-	}
+	registries := registryRepository.GetRegistriesByStartDate(startDate.Year(), int(startDate.Month()), startDate.Day())
 
 	return registries
 }
