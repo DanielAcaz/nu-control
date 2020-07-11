@@ -8,16 +8,16 @@ import (
 	"time"
 
 	algorithms "github.com/daniel-acaz/nubank-control/category_service/commons"
-	financeRegistry "github.com/daniel-acaz/nubank-control/category_service/models"
+	model "github.com/daniel-acaz/nubank-control/category_service/models"
 	registryRepository "github.com/daniel-acaz/nubank-control/category_service/repository"
 )
 
-func CreateRegistry(registry financeRegistry.FinanceRegistry) financeRegistry.FinanceRegistry {
-	registry.ID = "1"
+func CreateRegistry(registry model.FinanceRegistry) model.FinanceRegistry {
+	registryRepository.SaveRegistryAndApproveStatistic(registry)
 	return registry
 }
 
-func CreateCategoryByBaseRegistries(registry financeRegistry.FinanceRegistry) financeRegistry.FinanceRegistry {
+func CreateCategoryByBaseRegistries(registry model.FinanceRegistry) model.FinanceRegistry {
 
 	startDate := time.Now().AddDate(0, -6, 0)
 
@@ -30,39 +30,40 @@ func CreateCategoryByBaseRegistries(registry financeRegistry.FinanceRegistry) fi
 	}
 
 	registry.MyCategory = baseRegistries[0].MyCategory
+	registry.Accuracy = baseRegistries[0].Accuracy
 
 	return registry
 
 }
 
-func FilterByCommonTitle(registry financeRegistry.FinanceRegistry, registries []financeRegistry.FinanceRegistry,
-	percentage float64) []financeRegistry.FinanceRegistry {
+func FilterByCommonTitle(registry model.FinanceRegistry, registries []model.FinanceRegistry,
+	percentage float64) []model.FinanceRegistry {
 
 	data := emitters.Slice(registries)
 
 	stream := stream.New(data)
 
-	var mapRegistries = make(map[financeRegistry.FinanceRegistry]float64)
+	var mapRegistries = make(map[model.FinanceRegistry]float64)
 
 	for _, item := range registries {
 		sequencePercentage := algorithms.LongestCommonSubSequencePercentage([]byte(registry.Title), []byte(item.Title))
 		mapRegistries[item] = sequencePercentage
 	}
 
-	stream.Filter(func(item financeRegistry.FinanceRegistry) bool {
+	stream.Filter(func(item model.FinanceRegistry) bool {
 		return mapRegistries[item] >= percentage
 	})
 
 	stream.Batch().SortWith(func(registries interface{}, i, j int) bool {
-		sortRegistries := registries.([]financeRegistry.FinanceRegistry)
+		sortRegistries := registries.([]model.FinanceRegistry)
 
 		return mapRegistries[sortRegistries[i]] > mapRegistries[sortRegistries[j]]
 
 	})
 
-	var filteredRegistries []financeRegistry.FinanceRegistry
+	var filteredRegistries []model.FinanceRegistry
 	stream.Into(collectors.Func(func(data interface{}) error {
-		filteredRegistries = data.([]financeRegistry.FinanceRegistry)
+		filteredRegistries = data.([]model.FinanceRegistry)
 		return nil
 	}))
 
@@ -71,10 +72,16 @@ func FilterByCommonTitle(registry financeRegistry.FinanceRegistry, registries []
 		return nil
 	}
 
-	return filteredRegistries
+	var accurateRegistries []model.FinanceRegistry
+	for _, registry := range filteredRegistries {
+		registry.Accuracy = mapRegistries[registry]
+		accurateRegistries = append(accurateRegistries, registry)
+	}
+
+	return accurateRegistries
 }
 
-func GetRegistriesByStartDate(startDate time.Time) []financeRegistry.FinanceRegistry {
+func GetRegistriesByStartDate(startDate time.Time) []model.FinanceRegistry {
 
 	registries := registryRepository.GetRegistriesByStartDate(startDate.Year(), int(startDate.Month()), startDate.Day())
 

@@ -9,6 +9,7 @@ import (
 
 func main() {
 	log.Print("Startup Service...")
-	consumer.Consume()
+	//consumer.ConsumeCreateCategory()
+	consumer.ConsumeApprovedCategory()
 	registryController.RegistryController()
 }

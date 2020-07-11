@@ -6,8 +6,10 @@ import (
 	"encoding/json"
 	databaseConfig "github.com/daniel-acaz/nubank-control/category_service/config"
 	model "github.com/daniel-acaz/nubank-control/category_service/models"
+	"github.com/elastic/go-elasticsearch/v8/esapi"
 	"log"
 	"strconv"
+	"strings"
 )
 
 
@@ -80,4 +82,40 @@ func GetRegistriesByStartDate(year, month, day int) []model.FinanceRegistry {
 
 	log.Printf("going repository with result size: %d", len(registries))
 	return registries
+}
+
+func SaveRegistryAndApproveStatistic(registry model.FinanceRegistry) model.FinanceRegistry {
+
+	var db = databaseConfig.GetConnection()
+
+	body, err := json.Marshal(registry)
+	if err != nil {
+		log.Fatalf("Error parsing the registry: %s", err)
+	}
+
+	req := esapi.IndexRequest{
+		Index: "registries_index",
+		DocumentID: registry.ID,
+		Body: strings.NewReader( string( body ) ),
+		Refresh: "true",
+	}
+
+	res, err := req.Do(context.Background(), db)
+	if err != nil {
+		log.Fatalf("Error getting response: %s", err)
+	}
+
+	defer res.Body.Close()
+
+	if res.IsError() {
+		log.Printf("[%s] Error indexing document ID=%v", res.Status(), registry.ID)
+	} else {
+		var r map[string]interface{}
+		if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
+			log.Printf("Error parsing the response body: %s", err)
+		} else {
+			log.Printf("[%s] %s; version=%d", res.Status(), r["result"], int(r["_version"].(float64)))
+		}
+	}
+	return registry
 }
