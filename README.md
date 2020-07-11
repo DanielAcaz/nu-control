@@ -1,11 +1,11 @@
 # Nu Finance Controll
 
-Esse projeto é uma prova de conceito que pode ser usada em produção mas a princípio visa ser um caso de uso para um estudo de microsserivços contruidos em python, ,net core e golang. 
+Esse projeto é uma prova de conceito que pode ser usada em produção mas a princípio visa ser um caso de uso para um estudo de microsserivços contruidos em python, .net core e golang.
 
 ## Resume
 
-Se você acessar a plataforma web do seu cartão de crédito, vai ser possível baixar um documento csv da sua ultima fatura contento as informações das suas transações bancárias. 
-Para cada transação existe a inforamção de data, cateogria, título e valor. Porém, as suas categorias criadas pelo aplicativo não aparecem nesse documento. 
+Se você acessar a plataforma web do seu cartão de crédito, vai ser possível baixar um documento csv da sua ultima fatura contento as informações das suas transações bancárias.
+Para cada transação existe a inforamção de data, cateogria, título e valor. Porém, as suas categorias criadas pelo aplicativo não aparecem nesse documento.
 
 A idéia é uma plataforma que use essas informações para fazer o seu planjemanto financeiro mensal e anual. Te ajude com gráficos sobre quais lugares estão sendo mais gastos o seu dinheiro e outras análises estatísticas que estão para ser definidas.
 
@@ -19,11 +19,11 @@ Através de uma fila de mensageria (Kafka), ele fará a leitura de uma registro 
 
 ### Testando POC
 
-O Microsserviço de Categorias está desnevolvido em GoLang. Atualmente usa uma base de dados MySQL que será migrada para um elastic search devido sua necessidade de fazer pesquisas performáticas em uma base de dados muit extensa. Para ínico, o MySQL atende a necessidade.
+O Microsserviço de Categorias está desnevolvido em GoLang. Ele faz integração com uma base de dados no ElasticSearch onde fica registrado todas as transições financeiras.
 
 O Serivço por enquanto consome um tópico chamado "create-category-service" de um kafka.
 
-Para subir a infraestrutura com o Kafka e o MySql usamos o docker-compose da raiz do projeto com o seguinte comando:
+Para subir a infraestrutura com o Kafka e o ElasticSearch usamos o docker-compose da raiz do projeto com o seguinte comando:
 
 ```bash
 ~/nubank-control $ docker-compose up -d
@@ -36,50 +36,37 @@ Para criar o tópico no Kafka, executar os seguinte comando na raiz do projeto:
 
 ```
 
-O próximo passo é subir a aplicação em go. O projeto tem algumas depêndencias que devem ser instaladas antes de se aplicar o build.
+Antes de subirmos a aplicação em Go, precisamos carregar nossa base de dados para podermos testar a eficácia do algorimito de sugestão de categoria. Para isso usamos um arquivo chamado bulk.json que está na raiz do projeto. Fazemos um POST HTTP para a nossa base de dados do ElasticSearch com esse arquivo e assim nós alimentamos a base com mais de 700 registros. Para fazer o POST realizamos o seguinte comando na raiz do projeto:
+
+```bash
+curl -i -X POST localhost:9200/registries_index/registry/_bulk -H "Content-Type: application/json" --data-binary "@resources/static/bulk.json"
+```
+
+Para validar quantos registros foram criados usamos o comando:
+
+```bash
+curl http://localhost:9200/_cat/indices\?v
+```
+
+E, se tudo estiver correto, obteremos a resposta abaixo:
+
+```bash
+health status index            uuid                   pri rep docs.count docs.deleted store.size pri.store.size
+yellow open   registries_index zQV3dA8lTlel8Dt8KQGSDA   1   1        734            0     93.7kb         93.7kb
+```
+
+O próximo passo é subir a aplicação em Go. O projeto tem algumas depêndencias que devem ser instaladas antes de se aplicar o build.
 Para instalar as dependências, executar os seguintes comandos:
 
 ```bash
 ~/nubank-control $ go get "github.com/yudai/golcs" # lib para algorítmo de lcs
-~/nubank-control $ go get "github.com/jinzhu/gorm" # orm para banco de dados
-~/nubank-control $ go get "github.com/go-sql-driver/mysql" # driver para o mysql
-~/nubank-control $ go get "github.com/jinzhu/gorm/dialects/mysql" # dialects para queries
 ~/nubank-control $ go get "github.com/gorilla/mux" # framework para expor api REST
 ~/nubank-control $ go get "gopkg.in/confluentinc/confluent-kafka-go.v1/kafka" # Kafka*
 ~/nubank-control $ go get "github.com/vladimirvivien/automi" # lib para fazer stream de dados
 
 ```
 
-Antes de subir a aplicação, precisamos criar a tabela do banco de dados, pois ela não está sendo criada automaticamente pelo docker-compose. Para isso, vamos entrar dentro do container do MySql e criar a tabela nativamente através dos comandos:
-
-```bash
-~/nubank-control $ docker exec -it nubank-control_mysqlsrv_1 bash
-
-root@dedadb824c04: $ mysql -p # vai ser solicitada uma senha, a qual no projeto está setada como "root"
-
-mysql> create database category_service_db; # caso o banco de dados ainda não tenha sido criado
-
-mysql> use category_service_db
-
-mysql> create database category_service_db;
-
-mysql> CREATE TABLE `registry` (
-  `id` int NOT NULL,
-  `date` date,
-  `category` varchar(255),
-  `title` varchar(255),
-  `amount` int NOT NULL,
-  `my_category` varchar(255) NOT NULL,
-  `family_category` varchar(255),
-  PRIMARY KEY (`id`));
-
-mysql> quit;
-
-root@dedadb824c04: $ exit
-
-``` 
-
-Com a tabela de banco de dados criada finalmente podemos subir a aplicação e testa-la. Para subir a aplicação, fazemos os seguintes comandos:
+Para subir a aplicação, fazemos os seguintes comandos:
 
 ```bash
 ~/nubank-control $ cd category_service/
@@ -120,7 +107,7 @@ going repository with result size: 0
 Registry Date: 2020-05-18 00:00:00 +0000 UTC
 Registry Title: Assaí Atacadis
 Registry Category: casa
-Registry My Category: Despesa 
+Registry My Category: Despesa
 
 #no caso, como não temos nenhum registro no banco, esse campo retornará vazio, mas experimente criar um registro que o campo my_category tenha esse valor, e o campo title tenha, no mínimo, 80% de semelhança com o title da mensagem em json. O valor retornara populado com a mesma categoria.
 ```
